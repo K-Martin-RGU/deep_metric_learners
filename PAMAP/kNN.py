@@ -29,8 +29,7 @@ def cos_knn(k, test_data, test_target, stored_data, stored_target):
     # vote, and return prediction for every image in test_data
     pred = [max(set(i), key=i.count) for i in top]
     pred = np.array(pred)
-    
-    # print table giving classifier accuracy using test_target
+
     return pred
 
 def get_neighbours(instance, dataset, n):
