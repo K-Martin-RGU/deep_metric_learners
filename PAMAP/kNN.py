@@ -4,7 +4,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 
 import SelfbackUtil as inn
-import read as SelfBACK
+import read as PAMAP
 
 random.seed = 1337
 np.random.seed = 1337
@@ -46,7 +46,7 @@ def get_accuracy(test_labels, predictions):
 
 ### Dataset Functions ###
 def read_full_dataset(indice_keys = None):
-    data = SelfBACK.read()
+    data = PAMAP.read()
     return data
 
 def loov(data, test_person):
@@ -76,7 +76,7 @@ def loov(data, test_person):
 ### Main code ###
 
 data = read_full_dataset()
-writepath = "Results/SelfBACK_kNN_Results.txt"
+writepath = "Results/PAMAP_kNN_Results.txt"
 loov_scores = []
 
 for person in data.keys():
