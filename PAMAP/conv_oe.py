@@ -1,4 +1,7 @@
 import numpy as np
+from keras.utils import np_utils
+from keras.layers import Input, Dense, Conv1D, MaxPooling1D, Flatten, BatchNormalization
+from keras.models import Model
 from tensorflow import set_random_seed
 import os
 import heapq
@@ -51,6 +54,18 @@ def flatten(_data):
             flatten_labels.extend([activity for i in range(len(activity_data))])
     return flatten_data, flatten_labels
 
+
+def conv():
+    _input = Input(shape=(read.dct_length*3*3, 1))
+    x = Conv1D(32, kernel_size=5, activation='relu')(_input)
+    x = MaxPooling1D(pool_size=2)(x)
+    x = BatchNormalization()(x)
+    x = Flatten()(x)
+    x = Dense(100, activation='relu')(x)
+    x = BatchNormalization()(x)
+    return Model(inputs=_input, outputs=x, name='embedding')
+
+
 all_features = read.read()
 test_ids = list(all_features.keys())
 all_labels = list(all_features[test_ids[0]].keys())
@@ -73,18 +88,35 @@ for test_id in test_ids:
         for item in _train_labels:
             _train_labels_.append(activity_id_dict.get(item))
 
+        _train_labels_ = np_utils.to_categorical(_train_labels_, len(train_labels))
+
         _train_features = np.array(_train_features)
+        _train_features = np.expand_dims(_train_features, 3)
         print(_train_features.shape)
 
         _support_features = np.array(_support_features)
+        _support_features = np.expand_dims(_support_features, 3)
         print(_support_features.shape)
+
+        _input_ = Input(shape=(read.dct_length*3*3, 1))
+        base_network = conv()
+        base = base_network(_input_)
+        classifier = Dense(len(train_labels), activation='softmax')(base)
+        _model = Model(inputs=_input_, outputs=classifier, name='classifier')
+
+        _model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+        _model.fit(_train_features, _train_labels_, verbose=1, batch_size=batch_size, epochs=epochs, shuffle=True)
+
+        _support_preds = base_network.predict(_support_features)
 
         # knn evaluation
         for _l in list(_test_features[test_id].keys()):
             _test_label_data = _test_features[test_id][_l]
             _test_labels = [_l for i in range(len(_test_label_data))]
             _test_label_data = np.array(_test_label_data)
+            _test_label_data = np.expand_dims(_test_label_data, 3)
+            _test_preds = base_network.predict(_test_label_data)
 
-            acc = cos_knn(k, _test_label_data, _test_labels, _support_features, _support_labels)
-            result = 'knn,' + str(test_id) + ',' + str(a_label) + ',' + str(_l) + ',' + str(acc)
-            read.write_data('knn_oe.csv', result)
+            acc = cos_knn(k, _test_preds, _test_labels, _support_preds, _support_labels)
+            result = 'conv,' + str(test_id) + ',' + str(a_label) + ',' + str(_l) + ',' + str(acc)
+            read.write_data('conv_oe.csv', result)

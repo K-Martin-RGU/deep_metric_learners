@@ -56,7 +56,7 @@ def flatten(_data):
 
 
 def mlp():
-    _input = Input(shape=(read.dct_length*3*len(read.sensors),))
+    _input = Input(shape=(read.dct_length*3*3,))
     x = Dense(1200, activation='relu')(_input)
     x = BatchNormalization()(x)
     return Model(inputs=_input, outputs=x, name='embedding')
@@ -91,7 +91,7 @@ for test_id in test_ids:
         _support_features = np.array(_support_features)
         print(_support_features.shape)
 
-        _input_ = Input(shape=(read.dct_length*3*len(read.sensors),))
+        _input_ = Input(shape=(read.dct_length*3*3,))
         base_network = mlp()
         base = base_network(_input_)
         classifier = Dense(len(train_labels), activation='softmax')(base)
@@ -107,7 +107,8 @@ for test_id in test_ids:
             _test_label_data = _test_features[test_id][_l]
             _test_labels = [_l for i in range(len(_test_label_data))]
             _test_label_data = np.array(_test_label_data)
+            _test_preds = base_network.predict(_test_label_data)
 
-            acc = cos_knn(k, _test_label_data, _test_labels, _support_features, _support_labels)
-            result = 'knn,' + str(test_id) + ',' + str(a_label) + ',' + str(_l) + ',' + str(acc)
-            read.write_data('knn_oe.csv', result)
+            acc = cos_knn(k, _test_preds, _test_labels, _support_preds, _support_labels)
+            result = 'mlp,' + str(test_id) + ',' + str(a_label) + ',' + str(_l) + ',' + str(acc)
+            read.write_data('mlp_oe.csv', result)
